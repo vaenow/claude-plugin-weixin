@@ -7,7 +7,7 @@ allowed-tools:
   - Write
   - Bash(ls *)
   - Bash(mkdir *)
-  - Bash(curl *)
+  - Bash(bun *)
 ---
 
 # /weixin:configure — WeChat Channel Setup
@@ -42,44 +42,33 @@ Read both state files and give the user a complete picture:
 
 ### `login` — QR code login
 
-Interactive login flow using the WeChat iLink Bot API:
+Run the login script. It handles the full interactive flow: fetch QR code,
+render in terminal, show direct link, poll for scan, save credentials, and
+auto-add the scanner to the allowlist.
 
-1. `mkdir -p ~/.claude/channels/weixin`
+```bash
+bun "${CLAUDE_PLUGIN_ROOT}/login.ts"
+```
 
-2. Fetch QR code:
-   ```bash
-   curl -s "https://ilinkai.weixin.qq.com/ilink/bot/get_bot_qrcode?bot_type=3"
-   ```
-   Response contains `qrcode` (token) and `qrcode_img_content` (URL to QR image).
+If `CLAUDE_PLUGIN_ROOT` is not set (e.g. running outside plugin system),
+find `login.ts` relative to the skill file or in the project root.
 
-3. Show the QR code URL to the user and tell them to scan with WeChat.
+The script will:
+1. Fetch a QR code from `https://ilinkai.weixin.qq.com/`
+2. Render it in the terminal (via `npx qrcode-terminal`) and show the
+   direct link — user can scan OR open the link in WeChat
+3. Poll for scan status (wait → scaned → confirmed)
+4. Auto-refresh QR up to 3 times if it expires
+5. Save credentials to `~/.claude/channels/weixin/credentials.json`
+6. Add the scanner's user ID to the allowlist
 
-4. Poll for status in a loop (up to 5 minutes):
-   ```bash
-   curl -s "https://ilinkai.weixin.qq.com/ilink/bot/get_qrcode_status?qrcode=<qrcode>"
-   ```
-   Status values: `wait`, `scaned`, `confirmed`, `expired`.
-   - `wait` → keep polling (every 2s)
-   - `scaned` → tell user "已扫码，请在微信上确认"
-   - `expired` → tell user to retry
-   - `confirmed` → save credentials and finish
+After the script completes, tell the user to restart Claude Code to activate
+the channel.
 
-5. On `confirmed`, response has `bot_token`, `baseurl`, `ilink_bot_id`,
-   `ilink_user_id`. Save to `~/.claude/channels/weixin/credentials.json`:
-   ```json
-   {
-     "token": "<bot_token>",
-     "baseUrl": "<baseurl>",
-     "accountId": "<ilink_bot_id>",
-     "userId": "<ilink_user_id>"
-   }
-   ```
-   Write with mode 0o600.
-
-6. Auto-add the scanner's `ilink_user_id` to the allowlist in access.json
-   (they own the bot, they should be allowed).
-
-7. Tell user to restart Claude Code session to activate the channel.
+For a custom API base URL:
+```bash
+bun "${CLAUDE_PLUGIN_ROOT}/login.ts" --base-url "https://custom.endpoint.com/"
+```
 
 ### `clear` — remove credentials
 
@@ -101,3 +90,5 @@ update `baseUrl`, write back.
 - `access.json` is re-read on every inbound message — policy changes via
   `/weixin:access` take effect immediately, no restart.
 - Default API base URL is `https://ilinkai.weixin.qq.com/`.
+- The QR code URL is a WeChat mini-program link. It works when scanned with
+  WeChat's QR scanner OR when opened in WeChat's built-in browser.
