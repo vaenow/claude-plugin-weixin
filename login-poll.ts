@@ -11,7 +11,10 @@ import { readFileSync, writeFileSync, mkdirSync, renameSync } from 'fs'
 import { homedir } from 'os'
 import { join } from 'path'
 
-const STATE_DIR = join(homedir(), '.claude', 'channels', 'weixin')
+const INSTANCE = process.env.WEIXIN_INSTANCE || ''
+const STATE_DIR = INSTANCE
+  ? join(homedir(), '.claude', 'channels', 'weixin', INSTANCE)
+  : join(homedir(), '.claude', 'channels', 'weixin')
 const CREDENTIALS_FILE = join(STATE_DIR, 'credentials.json')
 const ACCESS_FILE = join(STATE_DIR, 'access.json')
 

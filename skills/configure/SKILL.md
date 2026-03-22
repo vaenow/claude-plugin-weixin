@@ -12,8 +12,11 @@ allowed-tools:
 
 # /weixin:configure — WeChat Channel Setup
 
-Manages WeChat iLink Bot login and credential storage. Credentials live in
-`~/.claude/channels/weixin/credentials.json`.
+Manages WeChat iLink Bot login and credential storage.
+
+**Multi-instance:** If `WEIXIN_INSTANCE` env var is set, state lives in
+`~/.claude/channels/weixin/<instance>/`. Otherwise, defaults to
+`~/.claude/channels/weixin/`.
 
 Arguments passed: `$ARGUMENTS`
 
@@ -23,13 +26,19 @@ Arguments passed: `$ARGUMENTS`
 
 ### No args — status and guidance
 
+Determine the state directory first:
+- If `WEIXIN_INSTANCE` env var is set → `~/.claude/channels/weixin/$WEIXIN_INSTANCE/`
+- Otherwise → `~/.claude/channels/weixin/`
+
+Show which instance is active (e.g., "当前实例: default" or "当前实例: work").
+
 Read both state files and give the user a complete picture:
 
-1. **Credentials** — check `~/.claude/channels/weixin/credentials.json` for
+1. **Credentials** — check `<state-dir>/credentials.json` for
    `token` and `baseUrl`. Show set/not-set; if set, show token first 6 chars
    masked.
 
-2. **Access** — read `~/.claude/channels/weixin/access.json` (missing file
+2. **Access** — read `<state-dir>/access.json` (missing file
    = defaults: `dmPolicy: "pairing"`, empty allowlist). Show:
    - DM policy and what it means
    - Allowed senders: count and list
