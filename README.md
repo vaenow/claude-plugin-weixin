@@ -1,5 +1,7 @@
 # claude-channel-weixin
 
+🌐 **Language / 语言**: [English](#claude-channel-weixin) | [中文](README_cn.md)
+
 WeChat (微信) channel plugin for [Claude Code](https://claude.com/claude-code) — receive and reply to WeChat messages directly in your terminal.
 
 Uses the WeChat iLink Bot API with HTTP long-poll. No public webhook needed.
@@ -103,109 +105,3 @@ WeChat requires a `context_token` to be passed back when replying. This token co
 
 MIT
 
----
-
-# claude-channel-weixin（中文文档）
-
-微信频道插件，用于 [Claude Code](https://claude.com/claude-code) — 在终端中直接收发微信消息。
-
-基于微信 iLink Bot API，HTTP 长轮询方式，无需公网地址或 Webhook。
-
-> **基于 [m1heng/claude-plugin-weixin](https://github.com/m1heng/claude-plugin-weixin)** — 感谢 [@m1heng](https://github.com/m1heng) 的原始实现。
-
-## ✨ 本 Fork 的新特性
-
-### 🔀 多实例支持
-
-同时运行多个 Claude Code 会话，每个会话连接**不同的**微信 Bot 账号，互不干扰，🚫 不再重复回复。
-
-启动 Claude Code 前设置 `WEIXIN_INSTANCE` 环境变量即可：
-
-```bash
-# 会话 1 — 默认实例（向后兼容，无需设置）
-claude
-
-# 会话 2 — 独立实例，连接另一个微信 Bot
-WEIXIN_INSTANCE=work claude
-```
-
-每个实例的凭据、访问控制和轮询状态 🔒 完全隔离，存储在 `~/.claude/channels/weixin/<实例名>/` 下。
-
-## 前置要求
-
-- [Claude Code](https://claude.com/claude-code) v2.1.80+
-- [Bun](https://bun.sh) 运行时
-
-## 安装
-
-```bash
-# 添加插件市场（首次）
-claude plugin marketplace add vaenow/claude-plugin-weixin
-
-# 安装插件
-claude plugin install weixin@vaenow-plugins
-```
-
-## 配置
-
-### 扫码登录
-
-在 Claude Code 中运行：
-
-```
-/weixin:configure login
-```
-
-插件会从微信 iLink Bot API 获取二维码，用微信扫码并在手机上确认即可。凭据自动保存。
-
-### 启动频道
-
-```bash
-claude --dangerously-load-development-channels plugin:weixin@vaenow-plugins
-```
-
-> 非官方插件在 [channels 预览期](https://code.claude.com/docs/en/channels-reference#test-during-the-research-preview) 需要 `--dangerously-load-development-channels` 参数。
-
-### 配对微信账号
-
-1. 在微信中给 Bot 发一条消息 — Bot 会回复一个配对码
-2. 在 Claude Code 中运行 `/weixin:access pair <配对码>` 完成授权
-
-### 🔀 多实例配置
-
-开启第二个实例：
-
-```bash
-# 带实例名启动 Claude Code
-WEIXIN_INSTANCE=work claude --dangerously-load-development-channels plugin:weixin@vaenow-plugins
-
-# 扫另一个微信二维码登录
-/weixin:configure login
-```
-
-各实例的状态目录互相独立：
-- 默认实例：`~/.claude/channels/weixin/`
-- 命名实例：`~/.claude/channels/weixin/<实例名>/`
-
-## 技能命令
-
-| 命令 | 说明 |
-|---|---|
-| `/weixin:configure` | 扫码登录、查看频道状态 |
-| `/weixin:access` | 管理配对、白名单、消息策略 |
-
-## 工作原理
-
-插件运行一个本地 MCP Server，通过 HTTP 长轮询从微信 iLink Bot API 拉取新消息。完全本地运行，无需公网地址。已授权的发送者的消息会转发到你的 Claude Code 会话，Claude 通过同一 API 回复。
-
-### 与 Telegram/飞书的区别
-
-微信回复时必须携带 `context_token`（来自收到的消息）。插件会自动将此 token 包含在频道通知的元数据中，Claude 回复时自动传回。
-
-## 致谢
-
-- 原始插件：[m1heng/claude-plugin-weixin](https://github.com/m1heng/claude-plugin-weixin)，作者 [@m1heng](https://github.com/m1heng)
-
-## 许可证
-
-MIT
